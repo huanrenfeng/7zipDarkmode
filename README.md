@@ -1,5 +1,7 @@
 # 7zipDarkmode
 
+![](7zDark.png)
+
 inspired by https://github.com/ysc3839/win32-darkmode/tree/master/win32-darkmode
 
 ## How To Compile 
