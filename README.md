@@ -27,22 +27,21 @@ compiled file is in
 	
 ## ///////////////// change ///////////////////////////
 	
-I added FM.cpp in C:\Users\huanr\Desktop\winProject\7z1900-src\CPP\7zip\UI\FileManager
-	to make it support dark mode
-	
 edited
 
 	CPP\7zip\UI\FileManager\FM.cpp, Cpp\Build.mak
 	
 	CPP\7zip\UI\FileManager\StdAfx.h
+	
 		#define _WIN32_WINNT 0x0600
 		
 	CPP\7zip\UI\FileManager\Panel.cpp
+	
 		CMyListView::OnMessage
 		
 Added
 
-	IatHook.h, DarkMode.h
+	IatHook.h, DarkMode.h, slightly different from the original files from win32-darkmode by ysc3839
 		
 got some problem when compiling, changing of StdAfx.h in CPP\7zip\UI\FileManager doesn't work
 
