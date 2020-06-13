@@ -57,3 +57,13 @@ check this
 	
 so,I deleted every -Yu"StdAfx.h" -Fp$O/a.pch in CPP\Build.mak
 
+
+## Talks
+
+I found a dark theme for 7z before. However, it's based on win7's flatty theme, not going to work on win10's dark theme.
+https://www.deviantart.com/alexgal23/art/Flaty-7-Zip-theme-438374489
+
+So I decided to do it on my own.
+
+I'll see how to modify tool bars.
+
