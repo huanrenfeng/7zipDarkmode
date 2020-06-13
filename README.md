@@ -4,7 +4,7 @@
 
 inspired by https://github.com/ysc3839/win32-darkmode/tree/master/win32-darkmode
 
-Only work on Win10.
+Only work on Win10. The menu also supports dark mode.
 
 ## How To Compile 
 
