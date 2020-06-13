@@ -445,8 +445,6 @@ static void ErrorMessage(const char *s)
 
 #define NT_CHECK_FAIL_ACTION ErrorMessage("Unsupported Windows version"); return 1;
 
-#include <Uxtheme.h>
-#pragma comment(lib,"UxTheme.lib")
 
 static int WINAPI WinMain2(int nCmdShow)
 {
@@ -478,27 +476,13 @@ static int WINAPI WinMain2(int nCmdShow)
   #endif
   */
 
+
   NT_CHECK
   SetLargePageSize();
 
   #endif
 
-enum PreferredAppMode
-{
-	Default,
-	AllowDark,
-	ForceDark,
-	ForceLight,
-	Max
-};
-
-  HMODULE hUxtheme = LoadLibraryExW(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-	auto ord135 = GetProcAddress(hUxtheme, MAKEINTRESOURCEA(135));
-	using fnSetPreferredAppMode = PreferredAppMode(WINAPI *)(PreferredAppMode appMode); // ordinal 135, in 1903
-	
-	fnSetPreferredAppMode _SetPreferredAppMode = nullptr;
-	_SetPreferredAppMode = reinterpret_cast<fnSetPreferredAppMode>(ord135);
-	_SetPreferredAppMode(AllowDark);	//make menu dark
+  InitDarkMode();
 
   LoadLangOneTime();
 

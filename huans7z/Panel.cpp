@@ -49,6 +49,7 @@ static DWORD kStyles[4] = { LVS_ICON, LVS_SMALLICON, LVS_LIST, LVS_REPORT };
 extern HINSTANCE g_hInstance;
 extern DWORD g_ComCtl32Version;
 
+
 void CPanel::Release()
 {
   // It's for unloading COM dll's: don't change it.
@@ -154,9 +155,10 @@ LRESULT CPanel::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
   return CWindow2::OnMessage(message, wParam, lParam);
 }
 
-#include <Uxtheme.h>
-#include <Vssym32.h>
-#include "DarkMode.h"
+struct SubclassInfo
+{
+	COLORREF headerTextColor;
+};
 
 LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -177,15 +179,30 @@ LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
   }
 
 
-//#if(_WIN32_WINNT >= 0x0501)
-
+#if(_WIN32_WINNT >= 0x0501)
+   //else if (message == WM_NOTIFY)
+  //{
+    //if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
+    //{
+    //  LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
+    //  switch (nmcd->dwDrawStage)
+    //  {
+    //  case CDDS_PREPAINT:
+    //    return CDRF_NOTIFYITEMDRAW;
+    //  case CDDS_ITEMPREPAINT:
+    //  {
+    //    auto info = reinterpret_cast<SubclassInfo*>(dwRefData);
+    //    SetTextColor(nmcd->hdc, info->headerTextColor);
+    //    return CDRF_DODEFAULT;
+    //  }
+    //  }
+    //}
+  //}
    else if (message == WM_THEMECHANGED)
   {
     HWND hWnd = _window;
 
     HWND hHeader = ListView_GetHeader(hWnd);
-
-    //bool g_darkModeEnabled = true;
 
     AllowDarkModeForWindow(hWnd, g_darkModeEnabled);
     AllowDarkModeForWindow(hHeader, g_darkModeEnabled);
@@ -213,13 +230,16 @@ LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
     //  GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->headerTextColor));
     //  CloseThemeData(hTheme);
     //}
-
+//
     //SendMessageW(hHeader, WM_THEMECHANGED, wParam, lParam);
-
+//
     RedrawWindow(hWnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
+
+     //return 0;
   }
 
-//#endif
+#endif
+
   else if (message == WM_SYSCHAR)
   {
     // For Alt+Enter Beep disabling
@@ -435,11 +455,11 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
   _listView.InvalidateRect(NULL, true);
   _listView.Update();
   
-
+//#if(_WIN32_WINNT >= 0x0501)
   //SetWindowTheme(hHeader, L"ItemsView", nullptr); // DarkMode
 
   
-//#if(_WIN32_WINNT >= 0x0501)
+
 	SetWindowTheme(HWND(_listView), L"ItemsView", nullptr); // DarkMode
 //#endif
 
