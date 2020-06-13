@@ -4,6 +4,8 @@
 
 inspired by https://github.com/ysc3839/win32-darkmode/tree/master/win32-darkmode
 
+Only work on Win10.
+
 ## How To Compile 
 
 copy my files to the orginal 7zip source folder, replace the old files, and compile.
