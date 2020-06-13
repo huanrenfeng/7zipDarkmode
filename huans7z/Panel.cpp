@@ -155,10 +155,12 @@ LRESULT CPanel::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
   return CWindow2::OnMessage(message, wParam, lParam);
 }
 
-struct SubclassInfo
-{
-	COLORREF headerTextColor;
-};
+//struct SubclassInfo
+//{
+//	COLORREF headerTextColor;
+//};
+
+COLORREF thecolor;
 
 LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -180,24 +182,24 @@ LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
 
 
 #if(_WIN32_WINNT >= 0x0501)
-   //else if (message == WM_NOTIFY)
-  //{
-    //if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
-    //{
-    //  LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
-    //  switch (nmcd->dwDrawStage)
-    //  {
-    //  case CDDS_PREPAINT:
-    //    return CDRF_NOTIFYITEMDRAW;
-    //  case CDDS_ITEMPREPAINT:
-    //  {
-    //    auto info = reinterpret_cast<SubclassInfo*>(dwRefData);
-    //    SetTextColor(nmcd->hdc, info->headerTextColor);
-    //    return CDRF_DODEFAULT;
-    //  }
-    //  }
-    //}
-  //}
+   else if (message == WM_NOTIFY)
+  {
+    if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
+    {
+      LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
+      switch (nmcd->dwDrawStage)
+      {
+      case CDDS_PREPAINT:
+        return CDRF_NOTIFYITEMDRAW;
+      case CDDS_ITEMPREPAINT:
+      {
+        //auto info = reinterpret_cast<SubclassInfo*>(dwRefData);
+        SetTextColor(nmcd->hdc, thecolor);
+        return CDRF_DODEFAULT;
+      }
+      }
+    }
+  }
    else if (message == WM_THEMECHANGED)
   {
     HWND hWnd = _window;
@@ -223,16 +225,16 @@ LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
       CloseThemeData(hTheme);
     }
 
-    //hTheme = OpenThemeData(hHeader, L"Header");
-    //if (hTheme)
-    //{
-    //  auto info = reinterpret_cast<SubclassInfo*>(dwRefData);
-    //  GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &(info->headerTextColor));
-    //  CloseThemeData(hTheme);
-    //}
-//
-    //SendMessageW(hHeader, WM_THEMECHANGED, wParam, lParam);
-//
+    hTheme = OpenThemeData(hHeader, L"Header");
+    if (hTheme)
+    {
+      //auto info = reinterpret_cast<SubclassInfo*>(dwRefData);
+      GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &thecolor);
+      CloseThemeData(hTheme);
+    }
+
+    SendMessageW(hHeader, WM_THEMECHANGED, wParam, lParam);
+
     RedrawWindow(hWnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
 
      //return 0;
@@ -455,13 +457,18 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
   _listView.InvalidateRect(NULL, true);
   _listView.Update();
   
-//#if(_WIN32_WINNT >= 0x0501)
-  //SetWindowTheme(hHeader, L"ItemsView", nullptr); // DarkMode
+#if(_WIN32_WINNT >= 0x0501)
+
+  HWND hlist = HWND(_listView);
+
+  HWND hHeader = ListView_GetHeader(hlist);
+
+  SetWindowTheme(hHeader, L"ItemsView", nullptr); // DarkMode
 
   
 
-	SetWindowTheme(HWND(_listView), L"ItemsView", nullptr); // DarkMode
-//#endif
+	SetWindowTheme(hlist, L"ItemsView", nullptr); // DarkMode
+#endif
 
   // Ensure that the common control DLL is loaded.
   INITCOMMONCONTROLSEX icex;
