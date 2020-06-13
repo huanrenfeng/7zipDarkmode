@@ -30,32 +30,22 @@ compiled file is in
 	
 	
 ## ///////////////// change ///////////////////////////
-	
+
 edited
 
-	CPP\7zip\UI\FileManager\FM.cpp, Cpp\Build.mak
+	CPP\7zip\UI\FileManager\FM.cpp, Cpp\Build.mak, CPP\7zip\UI\FileManager\FM.mak
 	
 	CPP\7zip\UI\FileManager\StdAfx.h
-	
 		#define _WIN32_WINNT 0x0600
 		
 	CPP\7zip\UI\FileManager\Panel.cpp
-	
 		CMyListView::OnMessage
 		
-Added
-
-	IatHook.h, DarkMode.h, slightly different from the original files from win32-darkmode by ysc3839
+	Panel.h
+		add header files
 		
-got some problem when compiling, changing of StdAfx.h in CPP\7zip\UI\FileManager doesn't work
-
-check this
-	https://docs.microsoft.com/en-us/cpp/build/reference/yu-use-precompiled-header-file?view=vs-2019
-	
-	cl -Yu means use precompiled-header-file
-	
-	
-so,I deleted every -Yu"StdAfx.h" -Fp$O/a.pch in CPP\Build.mak
+Added
+	IatHook.h, DarkMode.h，IatHook.cpp, Darkmode.cpp
 
 
 ## Talks
