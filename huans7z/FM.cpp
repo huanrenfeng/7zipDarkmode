@@ -995,10 +995,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       return 0;
     */
       
-    /*
+    
     case WM_SETTINGCHANGE:
-      break;
-    */
+    {
+      if (IsColorSchemeChangeMessage(lParam))
+      {
+        g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
+
+        RefreshTitleBarThemeColor(hWnd);
+        SendMessageW(g_App.Panels[0]._listView, WM_THEMECHANGED, 0, 0);
+        SendMessageW(g_App.Panels[1]._listView, WM_THEMECHANGED, 0, 0);
+      }
+    }
+    
     
     case WM_NOTIFY:
     {
