@@ -4,23 +4,25 @@ inspired by https://github.com/ysc3839/win32-darkmode/tree/master/win32-darkmode
 
 ## How To Compile 
 
+copy my files to the orginal 7zip source folder, replace the old files, and compile.
+
 Read this first.
 	http://www.ski-epic.com/2012_compiling_7zip_on_windows_with_visual_studio_10/index.html
 
-	turns out it uses nmake to compile
+turns out it uses nmake to compile
 	
 open "Developer Command Prompt for VS 2017"
 
-cd C:\my7zip\CPP\7zip\
-nmake NEW_COMPILER=1 MY_STATIC_LINK=1
+	cd C:\my7zip\CPP\7zip\
+	nmake NEW_COMPILER=1 MY_STATIC_LINK=1
 
 
 it takes almost 5 minutes to compile
 
 compiled file is in 
+
 	C:\my7zip\CPP\7zip\Bundles\Fm\O\7FM.exe
 	
-	for me, it's in C:\Users\huanr\Desktop\winProject\7z1900-src\CPP\7zip\Bundles\Fm\o
 	
 	
 ## ///////////////// change ///////////////////////////
@@ -39,6 +41,7 @@ edited
 		CMyListView::OnMessage
 		
 Added
+
 	IatHook.h, DarkMode.h
 		
 got some problem when compiling, changing of StdAfx.h in CPP\7zip\UI\FileManager doesn't work
