@@ -795,6 +795,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
     {
       g_HWND = hWnd;
+
+      if (g_darkModeSupported)
+      {
+        _AllowDarkModeForWindow(hWnd, true);
+        RefreshTitleBarThemeColor(hWnd);
+      }
       /*
       INITCOMMONCONTROLSEX icex;
       icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
