@@ -185,6 +185,8 @@ static const wchar_t * const kWindowClass = L"FM";
   WS_MAXIMIZEBOX)
 #endif
 
+HBRUSH greybrush= CreateSolidBrush(RGB(80,80,80));
+
 //  FUNCTION: InitInstance(HANDLE, int)
 static BOOL InitInstance(int nCmdShow)
 {
@@ -216,8 +218,11 @@ static BOOL InitInstance(int nCmdShow)
 
   // wc.hCursor = LoadCursor (NULL, IDC_ARROW);
   wc.hCursor = ::LoadCursor(0, IDC_SIZEWE);
-  // wc.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
-  wc.hbrBackground = (HBRUSH) (COLOR_BTNFACE + 1);
+
+  if(_ShouldAppsUseDarkMode())
+    wc.hbrBackground =greybrush;
+  else
+    wc.hbrBackground = (HBRUSH) (COLOR_BTNFACE + 1);
 
   wc.lpszMenuName =
     #ifdef UNDER_CE
@@ -1005,6 +1010,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         RefreshTitleBarThemeColor(hWnd);
         SendMessageW(g_App.Panels[0]._listView, WM_THEMECHANGED, 0, 0);
         SendMessageW(g_App.Panels[1]._listView, WM_THEMECHANGED, 0, 0);
+
+        if(g_darkModeEnabled)
+          SetClassLongPtr(hWnd,-10,(LONG_PTR)&greybrush);
+        else
+          SetClassLongPtr(hWnd,-10,(LONG_PTR)(HBRUSH) (COLOR_BTNFACE + 1));
       }
     }
     
