@@ -72,6 +72,7 @@ FM_OBJS = \
   $O\SystemPage.obj \
   $O\Darkmode.obj \
   $O\IatHook.obj \
+  $O\EditorUIDarkMode.obj \
   
 !IFNDEF UNDER_CE
 

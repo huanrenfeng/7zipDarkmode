@@ -4,11 +4,18 @@
 
 inspired by https://github.com/ysc3839/win32-darkmode/tree/master/win32-darkmode
 
-Only work on Win10. The menu also supports dark mode.
+and https://github.com/Nukem9/SkyrimSETest	(starting from 0.04)
+
+
+Only work on Win10. The menu also supports dark mode. In version 0.04 there might be some visual issues if you open file properties in the FileManager.
 
 ## How To Compile 
 
-copy my files to the orginal 7zip source folder, replace the old files, and compile.
+use Nukem9's https://github.com/Nukem9/detours Project to compile detours.lib with compiler setting /Gr
+
+and copy detours.lib to CPP\7zip\Bundles\Fm and CPP\7zip\UI\FileManager
+
+copy my files to the 7zip source folder, replace the old files, and compile.
 
 Read this first.
 	http://www.ski-epic.com/2012_compiling_7zip_on_windows_with_visual_studio_10/index.html
@@ -45,7 +52,7 @@ edited
 		add header files
 		
 Added
-	IatHook.h, DarkMode.h，IatHook.cpp, Darkmode.cpp
+	IatHook.h, DarkMode.h，IatHook.cpp, Darkmode.cpp, Detours.h, EditorUIDarkMode.h, EditorUIDarkMode.cpp
 
 
 ## Talks
@@ -54,6 +61,4 @@ I found a dark theme for 7z before. However, it's based on win7's flatty theme, 
 https://www.deviantart.com/alexgal23/art/Flaty-7-Zip-theme-438374489
 
 So I decided to do it on my own.
-
-I'll see how to modify tool bars.
 
