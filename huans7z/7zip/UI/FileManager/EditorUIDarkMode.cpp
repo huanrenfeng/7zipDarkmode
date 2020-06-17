@@ -272,12 +272,19 @@ namespace EditorUIDarkMode
 		return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 	}
 
+
 	DWORD WINAPI Comctl32GetSysColor(int nIndex)
 	{
 		switch (nIndex)
 		{
-		case COLOR_BTNFACE: return RGB(56, 56, 56);
-		case COLOR_BTNTEXT: return RGB(255, 255, 255);
+		case COLOR_WINDOW:
+		case COLOR_BTNFACE: 
+			return RGB(56, 56, 56);
+
+		case COLOR_BTNTEXT: 
+		case COLOR_WINDOWTEXT: 
+			return RGB(255, 255, 255);
+
 		}
 
 		return GetSysColor(nIndex);
@@ -443,6 +450,7 @@ namespace EditorUIDarkMode
 		{
 			static HBRUSH comboBoxBorder = CreateSolidBrush(RGB(130, 135, 144));// RGB(83, 83, 83)
 			static HBRUSH comboBoxFill = CreateSolidBrush(RGB(32, 32, 32));
+
 
 			switch (iPartId)
 			{
