@@ -54,11 +54,3 @@ edited
 Added
 	IatHook.h, DarkMode.h，IatHook.cpp, Darkmode.cpp, Detours.h, EditorUIDarkMode.h, EditorUIDarkMode.cpp
 
-
-## Talks
-
-I found a dark theme for 7z before. However, it's based on win7's flatty theme, not going to work on win10's dark theme.
-https://www.deviantart.com/alexgal23/art/Flaty-7-Zip-theme-438374489
-
-So I decided to do it on my own.
-
