@@ -403,6 +403,49 @@ LRESULT CMyComboBoxEdit::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
     return CallWindowProc(_origWindowProc, *this, message, wParam, lParam);
 }
 
+LRESULT CALLBACK editsubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR , DWORD_PTR){
+  static HBRUSH backgroundColorBrush = CreateSolidBrush(RGB(32, 32, 32));
+
+  switch (uMsg)
+  {
+    case WM_PRINTCLIENT:
+  case WM_PAINT:
+  {
+    DefSubclassProc(hWnd, uMsg, wParam, lParam);
+    
+    if (HDC hdc = GetDC(hWnd); hdc)
+    {
+      RECT windowArea;
+      GetClientRect(hWnd, &windowArea);
+
+      FillRect(hdc, &windowArea, backgroundColorBrush);
+
+
+      wchar_t buff[1024];
+      GetWindowText(hWnd,buff,1024);
+
+      HFONT font = GetWindowFont(hWnd);
+            RECT editRect;
+            Edit_GetRect(hWnd, OUT &editRect);
+            
+      HFONT previousFont = SelectFont(hdc, font);
+      SetTextColor(hdc, RGB(255, 255, 255));
+      SetBkMode(hdc, TRANSPARENT);
+      DrawTextW(hdc, buff, int(wcslen(buff)), &editRect, DT_TOP|DT_LEFT|DT_NOPREFIX|DT_NOCLIP);
+      SelectFont(hdc, previousFont);
+
+
+      ReleaseDC(hWnd, hdc);
+    }
+  }
+  return 0;
+  break;
+  }
+
+  return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
+}
+
 bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
 {
   // _virtualMode = false;
@@ -562,6 +605,12 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
       LONG_PTR(ComboBoxSubclassProc));
   */
   _comboBoxEdit.Attach(_headerComboBox.GetEditControl());
+
+  SetWindowSubclass(HWND(_comboBoxEdit),editsubclass , 0, 0);
+
+  //_headerComboBox.SendMsg(CBEM_SETWINDOWTHEME , 0, (LPARAM)L"Explorer");
+  //SetWindowTheme(HWND(_headerComboBox), L"DarkMode_Explorer", NULL);
+
 
   // _comboBoxEdit.SendMessage(CCM_SETUNICODEFORMAT, (WPARAM)(BOOL)TRUE, 0);
 
