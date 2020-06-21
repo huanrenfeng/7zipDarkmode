@@ -185,7 +185,7 @@ static const wchar_t * const kWindowClass = L"FM";
   WS_MAXIMIZEBOX)
 #endif
 
-HBRUSH greybrush= CreateSolidBrush(RGB(80,80,80));
+HBRUSH greybrush= CreateSolidBrush(RGB(56, 56, 56));
 
 //  FUNCTION: InitInstance(HANDLE, int)
 static BOOL InitInstance(int nCmdShow)
@@ -456,6 +456,7 @@ static void ErrorMessage(const char *s)
 
 #pragma comment(lib, "detours.lib")
 
+
 static int WINAPI WinMain2(int nCmdShow)
 {
   g_RAM_Size_Defined = NSystem::GetRamSize(g_RAM_Size);
@@ -495,15 +496,17 @@ static int WINAPI WinMain2(int nCmdShow)
   InitDarkMode();
 
   EditorUIDarkMode::Initialize();
-  EditorUIDarkMode::InitializeThread();
+  EditorUIDarkMode::InitializeThread(); //for black background
 
   auto comDll = (uintptr_t)GetModuleHandle(L"comctl32.dll");
 		assert(comDll);
 
-  Detours::IATHook(comDll, "USER32.dll", "GetSysColor", (uintptr_t)&EditorUIDarkMode::Comctl32GetSysColor);
+//these two lines are for background color
+  Detours::IATHook(comDll, "USER32.dll", "GetSysColor", (uintptr_t)&EditorUIDarkMode::Comctl32GetSysColor); 
   Detours::IATHook(comDll, "USER32.dll", "GetSysColorBrush", (uintptr_t)&EditorUIDarkMode::Comctl32GetSysColorBrush);
-  Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeBackground", (uintptr_t)&EditorUIDarkMode::Comctl32DrawThemeBackground);
-  Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeText", (uintptr_t)&EditorUIDarkMode::Comctl32DrawThemeText);
+
+  Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeBackground", (uintptr_t)&EditorUIDarkMode::Comctl32DrawThemeBackground); //for button and other ctrl's bkg color
+  Detours::IATDelayedHook(comDll, "UxTheme.dll", "DrawThemeText", (uintptr_t)&EditorUIDarkMode::Comctl32DrawThemeText);   //for button and other ctrl's text color
 
 
   LoadLangOneTime();
@@ -1018,22 +1021,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     */
       
     
-    case WM_SETTINGCHANGE:
-    {
-      if (IsColorSchemeChangeMessage(lParam))
-      {
-        g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
-
-        RefreshTitleBarThemeColor(hWnd);
-        SendMessageW(g_App.Panels[0]._listView, WM_THEMECHANGED, 0, 0);
-        SendMessageW(g_App.Panels[1]._listView, WM_THEMECHANGED, 0, 0);
-
-        if(g_darkModeEnabled)
-          SetClassLongPtr(hWnd,-10,(LONG_PTR)&greybrush);
-        else
-          SetClassLongPtr(hWnd,-10,(LONG_PTR)(HBRUSH) (COLOR_BTNFACE + 1));
-      }
-    }
+   
     
     
     case WM_NOTIFY:

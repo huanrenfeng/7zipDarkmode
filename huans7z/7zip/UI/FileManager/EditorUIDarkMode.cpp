@@ -5,8 +5,13 @@
 #include <vssym32.h>
 #include <Richedit.h>
 #include "EditorUIDarkMode.h"
+#include "DarkMode.h"
 
 //#pragma comment(lib, "uxtheme.lib")
+
+//extern bool g_darkModeSupported;
+//extern bool g_darkModeEnabled;
+extern HBRUSH greybrush;
 
 namespace EditorUIDarkMode
 {
@@ -28,27 +33,27 @@ namespace EditorUIDarkMode
 		{ "SysTabControl32", ThemeType::TabControl },
 	};
 
-	const std::unordered_set<std::string_view> PermanentWindowSubclasses
-	{
-		"Creation Kit",
-		"ActivatorClass",
-		"AlchemyClass",
-		"ArmorClass",
-		"CreatureClass",
-		"LockPickClass",
-		"NPCClass",
-		"WeaponClass",
-		"FaceClass",
-		"PlaneClass",
-		"MonitorClass",
-		"ViewerClass",
-		"SpeakerClass",
-		"LandClass",
-		"RenderWindow",
-		"#32770",
-		// "BABYGRID",
+	//const std::unordered_set<std::string_view> PermanentWindowSubclasses
+	//{
+	//	"Creation Kit",
+	//	"ActivatorClass",
+	//	"AlchemyClass",
+	//	"ArmorClass",
+	//	"CreatureClass",
+	//	"LockPickClass",
+	//	"NPCClass",
+	//	"WeaponClass",
+	//	"FaceClass",
+	//	"PlaneClass",
+	//	"MonitorClass",
+	//	"ViewerClass",
+	//	"SpeakerClass",
+	//	"LandClass",
+	//	"RenderWindow",
+	//	"#32770",
+	//	// "BABYGRID",
 		// "NiTreeCtrl",
-	};
+	//};
 
 	void Initialize()
 	{
@@ -60,6 +65,11 @@ namespace EditorUIDarkMode
 		if (EnableThemeHooking)
 			SetWindowsHookExA(WH_CALLWNDPROC, CallWndProcCallback, nullptr, GetCurrentThreadId());
 	}
+
+	struct ListViewSubclassInfo
+	{
+		COLORREF headerTextColor;
+	};
 
 	LRESULT CALLBACK CallWndProcCallback(int nCode, WPARAM wParam, LPARAM lParam)
 	{
@@ -79,6 +89,39 @@ namespace EditorUIDarkMode
 		return CallNextHookEx(nullptr, nCode, wParam, lParam);
 	}
 
+	typedef struct
+	{
+	UINT MessageId;
+	WPARAM wParam;
+	LPARAM lParam;
+	} SMessage, * PSMessage;
+
+
+//http://forums.codeguru.com/showthread.php?130766-How-to-Send-messages-to-ALL-child-windows
+	BOOL CALLBACK EnumChildProc(HWND hWnd, LPARAM lParam)
+	{
+
+		auto themeType = ThemeType::None;
+
+		char className[256] = {};
+		GetClassNameA(hWnd, className, ARRAYSIZE(className));
+
+		if (auto itr = TargetWindowThemes.find(className); itr != TargetWindowThemes.end())
+			themeType = itr->second;
+
+		switch (themeType)
+		{
+			case ThemeType::ListView:
+			{
+				PSMessage psMessage = (PSMessage)lParam;
+				SendMessage(hWnd, psMessage->MessageId, psMessage->wParam, psMessage->lParam);
+			}
+		}
+
+		return TRUE;
+
+	}
+
 	LRESULT CALLBACK WindowSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR , DWORD_PTR )
 	{
 		constexpr COLORREF generalBackgroundColor = RGB(56, 56, 56);
@@ -93,24 +136,59 @@ namespace EditorUIDarkMode
 		case WM_CTLCOLORDLG:
 		case WM_CTLCOLORSTATIC:
 		{
-			if (HDC hdc = reinterpret_cast<HDC>(wParam); hdc)
+			if (g_darkModeSupported && g_darkModeEnabled)
 			{
-				SetTextColor(hdc, generalTextColor);
-				SetBkColor(hdc, generalBackgroundColor);
-			}
+				if (HDC hdc = reinterpret_cast<HDC>(wParam); hdc)
+				{
+					SetTextColor(hdc, generalTextColor);
+					SetBkColor(hdc, generalBackgroundColor);
+				}
 
-			return reinterpret_cast<INT_PTR>(generalBackgroundBrush);
+				return reinterpret_cast<INT_PTR>(generalBackgroundBrush);
+			}
 		}
 		break;
 		}
 
 		LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
+		//if( !(g_darkModeSupported && g_darkModeEnabled))
+		//	return result;
+
 		switch (uMsg)
 		{
+		case WM_SETTINGCHANGE:
+			{
+				if (IsColorSchemeChangeMessage(lParam))
+				{
+					g_darkModeEnabled = _ShouldAppsUseDarkMode() && !IsHighContrast();
+
+					RefreshTitleBarThemeColor(hWnd);
+
+					SMessage sMessage={};
+					sMessage.MessageId = WM_THEMECHANGED;
+
+					EnumChildWindows(hWnd, EnumChildProc, (LPARAM)&sMessage);
+
+					if(g_darkModeEnabled)
+						SetClassLongPtr(hWnd,-10,(LONG_PTR)greybrush);
+					else
+						SetClassLongPtr(hWnd,-10,(LONG_PTR)(HBRUSH) (COLOR_BTNFACE + 1));
+
+					InvalidateRect(hWnd, NULL, TRUE); 
+
+				}
+			}
+			break;
 		case WM_INITDIALOG:
 		case WM_CREATE:
 		{
+			if (g_darkModeSupported)
+				{
+					_AllowDarkModeForWindow(hWnd, true);
+					RefreshTitleBarThemeColor(hWnd);		//make the title bar dark when the window isn't active
+				}
+
 			// Theme settings are initialized after WM_CREATE is processed
 			auto themeType = ThemeType::None;
 			HTHEME scrollBarTheme = nullptr;
@@ -123,6 +201,7 @@ namespace EditorUIDarkMode
 
 			switch (themeType)
 			{
+				
 			case ThemeType::MDIClient:
 				SetWindowSubclass(hWnd, MDIClientSubclass, 0, 0);
 				break;
@@ -139,11 +218,23 @@ namespace EditorUIDarkMode
 			break;
 
 			case ThemeType::ListView:
-				SetWindowSubclass(hWnd, ListViewSubclass, 0, 0);
+				SetWindowSubclass(hWnd, ListViewSubclass, 0, reinterpret_cast<DWORD_PTR>(new ListViewSubclassInfo{}));
 
-				ListView_SetTextColor(hWnd, RGB(255, 255, 255));
-				ListView_SetTextBkColor(hWnd, RGB(32, 32, 32));
-				ListView_SetBkColor(hWnd, RGB(32, 32, 32));
+				SendMessage(hWnd, WM_CHANGEUISTATE, MAKELONG(UIS_SET, UISF_HIDEFOCUS), 0);
+
+				#if(_WIN32_WINNT >= 0x0501)
+				
+				{
+					HWND hHeader = ListView_GetHeader(hWnd);
+				
+				  SetWindowTheme(hHeader, L"ItemsView", nullptr); // DarkMode
+				
+				  
+				
+					SetWindowTheme(hWnd, L"ItemsView", nullptr); // DarkMode
+				}
+				  
+				#endif
 
 				scrollBarTheme = OpenThemeData(hWnd, VSCLASS_SCROLLBAR);
 				break;
@@ -172,8 +263,8 @@ namespace EditorUIDarkMode
 			if (HTHEME windowTheme = GetWindowTheme(hWnd); windowTheme)
 				ThemeHandles.emplace(windowTheme, themeType);
 
-			if (!PermanentWindowSubclasses.count(className))
-				RemoveWindowSubclass(hWnd, WindowSubclass, 0);
+			//if (!PermanentWindowSubclasses.count(className))
+			//	RemoveWindowSubclass(hWnd, WindowSubclass, 0);
 		}
 		break;
 		}
@@ -181,61 +272,76 @@ namespace EditorUIDarkMode
 		return result;
 	}
 
-	LRESULT CALLBACK ListViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR , DWORD_PTR )
+	LRESULT CALLBACK ListViewSubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR , DWORD_PTR dwRefData)
 	{
 		switch (uMsg)
 		{
-		case WM_PAINT:
+#if(_WIN32_WINNT >= 0x0501)
+		case WM_NOTIFY:
 		{
-			// Paint normally, then apply custom grid lines
-			LRESULT result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
-
-			RECT headerRect;
-			GetClientRect(ListView_GetHeader(hWnd), &headerRect);
-
-			RECT listRect;
-			GetClientRect(hWnd, &listRect);
-
-			if (HDC hdc = GetDC(hWnd); hdc)
+			if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
 			{
-				HGDIOBJ oldPen = SelectObject(hdc, GetStockObject(DC_PEN));
-				int x = 0 - GetScrollPos(hWnd, SB_HORZ);
-
-				LVCOLUMN colInfo = {};
-				colInfo.mask = LVCF_WIDTH;
-
-				for (int col = 0; ListView_GetColumn(hWnd, col, &colInfo); col++)
+				LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
+				switch (nmcd->dwDrawStage)
 				{
-					x += colInfo.cx;
-
-					// Stop drawing if outside the listview client area
-					if (x >= listRect.right)
-						break;
-
-					// Right border
-					std::array<POINT, 2> verts
-					{{
-						{ x - 2, headerRect.bottom },
-						{ x - 2, listRect.bottom },
-					}};
-
-					SetDCPenColor(hdc, RGB(65, 65, 65));
-					Polyline(hdc, verts.data(), verts.size());
-
-					// Right border shadow
-					verts[0].x += 1;
-					verts[1].x += 1;
-
-					SetDCPenColor(hdc, RGB(29, 38, 48));
-					Polyline(hdc, verts.data(), verts.size());
+				case CDDS_PREPAINT:
+					return CDRF_NOTIFYITEMDRAW;
+				case CDDS_ITEMPREPAINT:
+				{
+					auto info = reinterpret_cast<ListViewSubclassInfo*>(dwRefData);
+					SetTextColor(nmcd->hdc, info->headerTextColor);
+					return CDRF_DODEFAULT;
 				}
+				}
+			}
+		}
+		case WM_THEMECHANGED:
+		{
 
-				SelectObject(hdc, oldPen);
-				ReleaseDC(hWnd, hdc);
+			HWND hHeader = ListView_GetHeader(hWnd);
+
+			AllowDarkModeForWindow(hWnd, g_darkModeEnabled);
+			AllowDarkModeForWindow(hHeader, g_darkModeEnabled);
+
+			HTHEME hTheme = OpenThemeData(nullptr, L"ItemsView");
+			if (hTheme)
+			{
+				COLORREF color;
+				if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &color)))
+				{
+					ListView_SetTextColor(hWnd, color);
+				}else{
+					ListView_SetTextColor(hWnd, RGB(255, 255, 255));
+				}
+				if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
+				{
+					ListView_SetTextBkColor(hWnd, color);
+					ListView_SetBkColor(hWnd, color);
+				}else{
+						ListView_SetTextBkColor(hWnd, RGB(32, 32, 32));
+						ListView_SetBkColor(hWnd, RGB(32, 32, 32));
+
+				}
+				CloseThemeData(hTheme);
 			}
 
-			return result;
+			hTheme = OpenThemeData(hHeader, L"Header");
+			if (hTheme)
+			{
+				auto info = reinterpret_cast<ListViewSubclassInfo*>(dwRefData);
+				GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR,  &(info->headerTextColor));
+				CloseThemeData(hTheme);
+			}
+
+			SendMessageW(hHeader, WM_THEMECHANGED, wParam, lParam);
+
+			RedrawWindow(hWnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
+
+			//return 0;
 		}
+
+#endif
+
 
 		case LVM_SETEXTENDEDLISTVIEWSTYLE:
 		{
@@ -275,6 +381,9 @@ namespace EditorUIDarkMode
 
 	DWORD WINAPI Comctl32GetSysColor(int nIndex)
 	{
+		if( !(g_darkModeSupported && g_darkModeEnabled))
+			return GetSysColor(nIndex);
+
 		switch (nIndex)
 		{
 		case COLOR_WINDOW:
@@ -292,6 +401,9 @@ namespace EditorUIDarkMode
 
 	HBRUSH WINAPI Comctl32GetSysColorBrush(int nIndex)
 	{
+		if( !(g_darkModeSupported && g_darkModeEnabled))
+			return GetSysColorBrush(nIndex);
+
 		static HBRUSH btnFaceBrush = CreateSolidBrush(Comctl32GetSysColor(COLOR_BTNFACE));
 		static HBRUSH btnTextBrush = CreateSolidBrush(Comctl32GetSysColor(COLOR_BTNTEXT));
 
@@ -304,8 +416,11 @@ namespace EditorUIDarkMode
 		return GetSysColorBrush(nIndex);
 	}
 
-	HRESULT WINAPI Comctl32DrawThemeText(HTHEME , HDC hdc, int , int , LPCWSTR pszText, int cchText, DWORD dwTextFlags, DWORD , LPCRECT pRect)
+	HRESULT WINAPI Comctl32DrawThemeText(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, LPCWSTR pszText, int cchText, DWORD dwTextFlags, DWORD dwTextFlags2, LPCRECT pRect)
 	{
+		if( !(g_darkModeSupported && g_darkModeEnabled))
+			return DrawThemeText(hTheme,hdc,iPartId,iStateId,pszText,cchText,dwTextFlags,dwTextFlags2,pRect);
+
 		SetBkMode(hdc, TRANSPARENT);
 		SetTextColor(hdc, RGB(255, 255, 255));
 
@@ -317,6 +432,10 @@ namespace EditorUIDarkMode
 
 	HRESULT WINAPI Comctl32DrawThemeBackground(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT pRect, LPCRECT pClipRect)
 	{
+
+		if( !(g_darkModeSupported && g_darkModeEnabled))
+			return DrawThemeBackground(hTheme, hdc, iPartId, iStateId, pRect, pClipRect);
+
 		auto themeType = ThemeType::None;
 
 		if (auto itr = ThemeHandles.find(hTheme); itr != ThemeHandles.end())

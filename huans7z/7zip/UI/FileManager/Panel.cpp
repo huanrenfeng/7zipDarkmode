@@ -181,66 +181,6 @@ LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
   }
 
 
-#if(_WIN32_WINNT >= 0x0501)
-   else if (message == WM_NOTIFY)
-  {
-    if (reinterpret_cast<LPNMHDR>(lParam)->code == NM_CUSTOMDRAW)
-    {
-      LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
-      switch (nmcd->dwDrawStage)
-      {
-      case CDDS_PREPAINT:
-        return CDRF_NOTIFYITEMDRAW;
-      case CDDS_ITEMPREPAINT:
-      {
-        //auto info = reinterpret_cast<SubclassInfo*>(dwRefData);
-        SetTextColor(nmcd->hdc, thecolor);
-        return CDRF_DODEFAULT;
-      }
-      }
-    }
-  }
-   else if (message == WM_THEMECHANGED)
-  {
-    HWND hWnd = _window;
-
-    HWND hHeader = ListView_GetHeader(hWnd);
-
-    AllowDarkModeForWindow(hWnd, g_darkModeEnabled);
-    AllowDarkModeForWindow(hHeader, g_darkModeEnabled);
-
-    HTHEME hTheme = OpenThemeData(nullptr, L"ItemsView");
-    if (hTheme)
-    {
-      COLORREF color;
-      if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &color)))
-      {
-        ListView_SetTextColor(hWnd, color);
-      }
-      if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
-      {
-        ListView_SetTextBkColor(hWnd, color);
-        ListView_SetBkColor(hWnd, color);
-      }
-      CloseThemeData(hTheme);
-    }
-
-    hTheme = OpenThemeData(hHeader, L"Header");
-    if (hTheme)
-    {
-      //auto info = reinterpret_cast<SubclassInfo*>(dwRefData);
-      GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, &thecolor);
-      CloseThemeData(hTheme);
-    }
-
-    SendMessageW(hHeader, WM_THEMECHANGED, wParam, lParam);
-
-    RedrawWindow(hWnd, nullptr, nullptr, RDW_FRAME | RDW_INVALIDATE);
-
-     //return 0;
-  }
-
-#endif
 
   else if (message == WM_SYSCHAR)
   {
@@ -404,6 +344,9 @@ LRESULT CMyComboBoxEdit::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 LRESULT CALLBACK editsubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR , DWORD_PTR){
+  if( !(g_darkModeSupported && g_darkModeEnabled))
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
   static HBRUSH backgroundColorBrush = CreateSolidBrush(RGB(32, 32, 32));
 
   switch (uMsg)
@@ -411,8 +354,8 @@ LRESULT CALLBACK editsubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     case WM_PRINTCLIENT:
   case WM_PAINT:
   {
-    DefSubclassProc(hWnd, uMsg, wParam, lParam);
-    
+    auto result = DefSubclassProc(hWnd, uMsg, wParam, lParam);
+
     if (HDC hdc = GetDC(hWnd); hdc)
     {
       RECT windowArea;
@@ -436,9 +379,11 @@ LRESULT CALLBACK editsubclass(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 
       ReleaseDC(hWnd, hdc);
+      return 0;
     }
+    return result;
   }
-  return 0;
+  
   break;
   }
 
@@ -500,18 +445,6 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
   _listView.InvalidateRect(NULL, true);
   _listView.Update();
   
-#if(_WIN32_WINNT >= 0x0501)
-
-  HWND hlist = HWND(_listView);
-
-  HWND hHeader = ListView_GetHeader(hlist);
-
-  SetWindowTheme(hHeader, L"ItemsView", nullptr); // DarkMode
-
-  
-
-	SetWindowTheme(hlist, L"ItemsView", nullptr); // DarkMode
-#endif
 
   // Ensure that the common control DLL is loaded.
   INITCOMMONCONTROLSEX icex;
@@ -607,12 +540,6 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
   _comboBoxEdit.Attach(_headerComboBox.GetEditControl());
 
   SetWindowSubclass(HWND(_comboBoxEdit),editsubclass , 0, 0);
-
-  //_headerComboBox.SendMsg(CBEM_SETWINDOWTHEME , 0, (LPARAM)L"Explorer");
-  //SetWindowTheme(HWND(_headerComboBox), L"DarkMode_Explorer", NULL);
-
-
-  // _comboBoxEdit.SendMessage(CCM_SETUNICODEFORMAT, (WPARAM)(BOOL)TRUE, 0);
 
   _comboBoxEdit.SetUserDataLongPtr(LONG_PTR(&_comboBoxEdit));
   _comboBoxEdit._panel = this;

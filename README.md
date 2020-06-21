@@ -7,13 +7,17 @@ inspired by https://github.com/ysc3839/win32-darkmode/tree/master/win32-darkmode
 and https://github.com/Nukem9/SkyrimSETest	(starting from 0.04)
 
 
-Only work on Win10. The menu also supports dark mode. In version 0.04 there might be some visual issues if you open file properties in the FileManager.
+Only work on Win10. The menu also supports dark mode. After version 0.04 there might be some visual issues if you open file properties in the FileManager.
+
+## Download
+
+	https://github.com/renfenghuan/7zipDarkmode/releases 
 
 ## How To Compile 
 
 use Nukem9's https://github.com/Nukem9/detours Project to compile detours.lib with compiler setting /Gr
 
-and copy detours.lib to CPP\7zip\Bundles\Fm and CPP\7zip\UI\FileManager
+and copy detours.lib to CPP\7zip\Bundles\Fm
 
 copy my files to the 7zip source folder, replace the old files, and compile.
 
@@ -24,11 +28,9 @@ turns out it uses nmake to compile
 	
 open "Developer Command Prompt for VS 2017"
 
-	cd C:\my7zip\CPP\7zip\
-	nmake NEW_COMPILER=1 MY_STATIC_LINK=1
+	cd C:\my7zip\CPP\7zip\Bundles\Fm
+	nmake
 
-
-it takes almost 5 minutes to compile
 
 compiled file is in 
 
@@ -36,7 +38,7 @@ compiled file is in
 	
 	
 	
-## ///////////////// change ///////////////////////////
+## ///////////////// Change ///////////////////////////
 
 edited
 
@@ -53,4 +55,4 @@ edited
 		
 Added
 	IatHook.h, DarkMode.h，IatHook.cpp, Darkmode.cpp, Detours.h, EditorUIDarkMode.h, EditorUIDarkMode.cpp
-
+	(Many files come from links I mentioned, but I edited many contents.)
