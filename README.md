@@ -1,6 +1,5 @@
 # 7zipDarkmode
 
-[![Build status](https://img.shields.io/github/workflow/status/renfenghuan/7zipDarkmode/Build/master?logo=Github)](https://github.com/renfenghuan/7zipDarkmode)
 [![Latest release](https://img.shields.io/github/v/release/renfenghuan/7zipDarkmode?include_prereleases)](https://github.com/renfenghuan/7zipDarkmode/latest)
 [![Total downloads](https://img.shields.io/github/downloads/renfenghuan/7zipDarkmode/total.svg)](https://github.com/renfenghuan/7zipDarkmode/releases)
 
@@ -15,6 +14,8 @@ Only work on Win10. The menu also supports dark mode. After version 0.04 there m
 
 
 ## How To Compile 
+
+Download 7zip Source code https://sourceforge.net/projects/sevenzip/
 
 use Nukem9's https://github.com/Nukem9/detours Project to compile detours.lib with compiler setting /Gr
 
