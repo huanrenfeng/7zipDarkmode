@@ -12,6 +12,8 @@ and https://github.com/Nukem9/SkyrimSETest	(starting from 0.04)
 
 Only work on Win10. The menu also supports dark mode. After version 0.04 there might be some visual issues if you open file properties in the FileManager.
 
+Download link: https://github.com/renfenghuan/7zipDarkmode/releases
+
 
 ## How To Compile 
 
