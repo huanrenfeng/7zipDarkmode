@@ -19,6 +19,8 @@ Download link: https://github.com/renfenghuan/7zipDarkmode/releases
 
 Download 7zip Source code https://sourceforge.net/projects/sevenzip/
 
+I used 7zip 19 version. But I only changed some of the UI codes. I think it's possible that one can use my files to compile newer versions.
+
 use Nukem9's https://github.com/Nukem9/detours Project to compile detours.lib with compiler setting /Gr
 
 and copy detours.lib to CPP\7zip\Bundles\Fm
