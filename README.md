@@ -10,9 +10,11 @@ inspired by https://github.com/ysc3839/win32-darkmode/tree/master/win32-darkmode
 and https://github.com/Nukem9/SkyrimSETest	(starting from 0.04)
 
 
-Only work on Win10. The menu also supports dark mode. After version 0.04 there might be some visual issues if you open file properties in the FileManager.
+Only work on Win10 which means that the menu also supports dark mode. After version 0.04 there might be some visual issues if you open file properties in the 7zipFM.
 
 Download link: https://github.com/renfenghuan/7zipDarkmode/releases
+
+Once downloaded, replace the 7zipFM.exe in the installation directory with my new exe.
 
 
 ## How To Compile 
