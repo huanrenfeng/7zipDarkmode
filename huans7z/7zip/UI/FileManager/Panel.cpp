@@ -2,7 +2,7 @@
 
 #include "StdAfx.h"
 
-#include <Windowsx.h>
+#include <WindowsX.h>
 // #include <stdio.h>
 
 #include "../../../Common/IntToString.h"
@@ -49,7 +49,6 @@ static DWORD kStyles[4] = { LVS_ICON, LVS_SMALLICON, LVS_LIST, LVS_REPORT };
 extern HINSTANCE g_hInstance;
 extern DWORD g_ComCtl32Version;
 
-
 void CPanel::Release()
 {
   // It's for unloading COM dll's: don't change it.
@@ -63,7 +62,7 @@ CPanel::~CPanel()
   CloseOpenFolders();
 }
 
-HWND CPanel::GetParent()
+HWND CPanel::GetParent() const
 {
   HWND h = CWindow2::GetParent();
   return (h == 0) ? _mainWindow : h;
@@ -77,7 +76,7 @@ HRESULT CPanel::Create(HWND mainWindow, HWND parentWindow, UINT id,
     const UString &arcFormat,
     CPanelCallback *panelCallback, CAppState *appState,
     bool needOpenArc,
-    bool &archiveIsOpened, bool &encrypted)
+    COpenResult &openRes)
 {
   _mainWindow = mainWindow;
   _processTimer = true;
@@ -101,9 +100,9 @@ HRESULT CPanel::Create(HWND mainWindow, HWND parentWindow, UINT id,
         cfp = fs2us(cfpF);
     }
 
-  RINOK(BindToPath(cfp, arcFormat, archiveIsOpened, encrypted));
+  RINOK(BindToPath(cfp, arcFormat, openRes));
 
-  if (needOpenArc && !archiveIsOpened)
+  if (needOpenArc && !openRes.ArchiveIsOpened)
     return S_OK;
 
   if (!CreateEx(0, kClassName, 0, WS_CHILD | WS_VISIBLE,
@@ -115,8 +114,11 @@ HRESULT CPanel::Create(HWND mainWindow, HWND parentWindow, UINT id,
   return S_OK;
 }
 
+// extern UInt32 g_NumMessages;
+
 LRESULT CPanel::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
 {
+  // g_NumMessages++;
   switch (message)
   {
     case kShiftSelectMessage:
@@ -155,11 +157,6 @@ LRESULT CPanel::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
   return CWindow2::OnMessage(message, wParam, lParam);
 }
 
-//struct SubclassInfo
-//{
-//	COLORREF headerTextColor;
-//};
-
 COLORREF thecolor;
 
 LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
@@ -179,9 +176,6 @@ LRESULT CMyListView::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
       return 0;
     }
   }
-
-
-
   else if (message == WM_SYSCHAR)
   {
     // For Alt+Enter Beep disabling
@@ -320,7 +314,7 @@ LRESULT CMyComboBoxEdit::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
           bool shift = IsKeyDown(VK_SHIFT);
           if (!alt && !ctrl && !shift)
           {
-            g_App.SwitchOnOffOnePanel();;
+            g_App.SwitchOnOffOnePanel();
             return 0;
           }
           break;
@@ -399,7 +393,7 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
   _ascending = true;
   _lastFocusedIsList = true;
 
-  DWORD style = WS_CHILD | WS_VISIBLE; //  | WS_BORDER ; // | LVS_SHAREIMAGELISTS; //  | LVS_SHOWSELALWAYS;;
+  DWORD style = WS_CHILD | WS_VISIBLE; //  | WS_BORDER ; // | LVS_SHAREIMAGELISTS; //  | LVS_SHOWSELALWAYS;
 
   style |= LVS_SHAREIMAGELISTS;
   // style  |= LVS_AUTOARRANGE;
@@ -445,7 +439,6 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
   _listView.InvalidateRect(NULL, true);
   _listView.Update();
   
-
   // Ensure that the common control DLL is loaded.
   INITCOMMONCONTROLSEX icex;
 
@@ -456,7 +449,7 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
   TBBUTTON tbb [ ] =
   {
     // {0, 0, TBSTATE_ENABLED, BTNS_SEP, 0L, 0},
-    {VIEW_PARENTFOLDER, kParentFolderID, TBSTATE_ENABLED, BTNS_BUTTON, 0L, 0},
+    {VIEW_PARENTFOLDER, kParentFolderID, TBSTATE_ENABLED, BTNS_BUTTON, { 0, 0 }, 0, 0 },
     // {0, 0, TBSTATE_ENABLED, BTNS_SEP, 0L, 0},
     // {VIEW_NEWFOLDER, kCreateFolderID, TBSTATE_ENABLED, BTNS_BUTTON, 0L, 0},
   };
@@ -538,8 +531,10 @@ bool CPanel::OnCreate(CREATESTRUCT * /* createStruct */)
       LONG_PTR(ComboBoxSubclassProc));
   */
   _comboBoxEdit.Attach(_headerComboBox.GetEditControl());
-
+  
   SetWindowSubclass(HWND(_comboBoxEdit),editsubclass , 0, 0);
+
+  // _comboBoxEdit.SendMessage(CCM_SETUNICODEFORMAT, (WPARAM)(BOOL)TRUE, 0);
 
   _comboBoxEdit.SetUserDataLongPtr(LONG_PTR(&_comboBoxEdit));
   _comboBoxEdit._panel = this;
@@ -727,9 +722,14 @@ bool CPanel::OnNotify(UINT /* controlID */, LPNMHDR header, LRESULT &result)
     return OnNotifyReBar(header, result);
   else if (header->hwndFrom == _listView)
     return OnNotifyList(header, result);
-  else if (::GetParent(header->hwndFrom) == _listView &&
-      header->code == NM_RCLICK)
-    return OnRightClick((MY_NMLISTVIEW_NMITEMACTIVATE *)header, result);
+  else if (::GetParent(header->hwndFrom) == _listView)
+  {
+    // NMHDR:code is UINT
+    // NM_RCLICK is unsigned in windows sdk
+    // NM_RCLICK is int      in MinGW
+    if (header->code == (UINT)NM_RCLICK)
+      return OnRightClick((MY_NMLISTVIEW_NMITEMACTIVATE *)header, result);
+  }
   return false;
 }
 
@@ -849,6 +849,18 @@ bool CPanel::IsArcFolder() const
   return GetFolderTypeID().IsPrefixedBy_Ascii_NoCase("7-Zip");
 }
 
+bool CPanel::IsHashFolder() const
+{
+  if (_folder)
+  {
+    NCOM::CPropVariant prop;
+    if (_folder->GetFolderProperty(kpidIsHash, &prop) == S_OK)
+      if (prop.vt == VT_BOOL)
+        return VARIANT_BOOLToBool(prop.boolVal);
+  }
+  return false;
+}
+
 UString CPanel::GetFsPath() const
 {
   if (IsFSDrivesFolder() && !IsDeviceDrivesPrefix() && !IsSuperDrivesPrefix())
@@ -963,8 +975,8 @@ static UString GetSubFolderNameForExtract2(const UString &arcPath)
   UString name = arcPath;
   if (slashPos >= 0)
   {
-    s = arcPath.Left(slashPos + 1);
-    name = arcPath.Ptr(slashPos + 1);
+    s = arcPath.Left((unsigned)(slashPos + 1));
+    name = arcPath.Ptr((unsigned)(slashPos + 1));
   }
   s += GetSubFolderNameForExtract(name);
   return s;
@@ -1027,7 +1039,8 @@ static void AddValuePair(UINT resourceID, UInt64 value, UString &s)
   s += sz;
   s.Add_LF();
 }
-*/
+
+// now we don't need CThreadTest, since now we call CopyTo for "test command
 
 class CThreadTest: public CProgressThreadVirt
 {
@@ -1039,9 +1052,6 @@ public:
   CMyComPtr<IArchiveFolder> ArchiveFolder;
 };
 
-// actually now we don't need CThreadTest, since now we call CopyTo for "test command
-
-/*
 HRESULT CThreadTest::ProcessVirt()
 {
   RINOK(ArchiveFolder->Extract(&Indices[0], Indices.Size(),
@@ -1065,9 +1075,7 @@ HRESULT CThreadTest::ProcessVirt()
   }
   return S_OK;
 }
-*/
 
-/*
 static void AddSizePair(UInt32 langID, UInt64 value, UString &s)
 {
   char sz[32];
