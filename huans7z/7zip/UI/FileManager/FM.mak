@@ -7,8 +7,8 @@ LIBS = $(LIBS) ceshell.lib Commctrl.lib
 !ELSE
 LIBS = $(LIBS) comctl32.lib htmlhelp.lib comdlg32.lib Mpr.lib Gdi32.lib
 CFLAGS = $(CFLAGS) -DWIN_LONG_PATH -DSUPPORT_DEVICE_FILE
-LFLAGS = $(LFLAGS) /DELAYLOAD:mpr.dll 
-LIBS = $(LIBS) delayimp.lib 
+LFLAGS = $(LFLAGS) /DELAYLOAD:mpr.dll
+LIBS = $(LIBS) delayimp.lib
 !ENDIF
 
 FM_OBJS = \
@@ -73,7 +73,8 @@ FM_OBJS = \
   $O\Darkmode.obj \
   $O\IatHook.obj \
   $O\EditorUIDarkMode.obj \
-  
+  $O\VerCtrl.obj \
+
 !IFNDEF UNDER_CE
 
 FM_OBJS = $(FM_OBJS) \

@@ -637,7 +637,7 @@ namespace EditorUIDarkMode
 						{ pRect->right - 2, pRect->bottom - 2 + i },
 					}};
 
-					PolyPolyline(hdc, verts.data(), counts.data(), counts.size());
+					PolyPolyline(hdc, verts.data(), counts.data(), (DWORD)counts.size());
 				}
 
 				// Fill background on hover (1px padding for border shadow)
